@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signature Forensic Analysis Tool</title>
+    <meta name="description"
+        content="Forensic signature analysis for measuring angles, distances, arc curvature, and comparing disputed vs specimen signatures.">
+    <link rel="stylesheet" href="forensics-style.css">
+</head>
+
+<body>
+
+    <div class="toolbar">
+        <div class="logo">🔬 Signature Forensics</div>
+
+        <div class="tool-grp">
+            <button class="tbtn on" data-tool="ruler">📏 Ruler</button>
+            <button class="tbtn" data-tool="angle">📐 Angle</button>
+            <button class="tbtn" data-tool="arc">🔄 Arc Curve</button>
+            <button class="tbtn" data-tool="offset">↔ Offset</button>
+            <button class="tbtn" data-tool="overlay">🔍 Overlay</button>
+            <button class="tbtn" data-tool="hand">✋ Hand</button>
+        </div>
+
+        <div class="arc-opts" id="arcOpts">
+            <label>Side:</label>
+            <select id="arcSide">
+                <option value="inside">Inside (Concave)</option>
+                <option value="outside">Outside (Convex)</option>
+            </select>
+        </div>
+
+        <div class="divider"></div>
+        <button class="abtn" id="undoBtn" disabled>↩ Undo</button>
+        <button class="abtn" id="redoBtn" disabled>↪ Redo</button>
+        <div class="divider"></div>
+
+        <div class="dpi-box">
+            <label>DPI:</label>
+            <input type="number" id="dpiIn" value="96" min="1" max="600">
+        </div>
+
+        <div class="divider"></div>
+        <button class="abtn" id="dlBtn">⬇ PNG</button>
+        <button class="abtn" id="dlSvgBtn">⬇ HTML</button>
+        <button class="abtn" id="clrBtn">🗑 Clear</button>
+    </div>
+
+    <div class="app">
+        <!-- LEFT -->
+        <div class="left">
+            <div class="phead">📂 Signatures</div>
+            <div class="drop-zone" id="dropZone">
+                <div class="ico">📎</div>
+                <p>Drop image here</p>
+                <p class="sub">Click to browse · Ctrl+V paste</p>
+            </div>
+            <input type="file" id="fileIn" accept="image/*" multiple>
+            <div class="sigs" id="sigList"></div>
+        </div>
+        <div class="center">
+            <div class="cvs-wrap" id="cvsWrap">
+                <canvas id="cvs" width="800" height="600"></canvas>
+                <div class="hint" id="hint">Upload a signature image to begin</div>
+                <div class="zoom-bar">
+                    <button id="zi" title="Zoom In">+</button>
+                    <button id="zo" title="Zoom Out">−</button>
+                    <button id="zf" title="Fit">⊡</button>
+                </div>
+            </div>
+        </div>
+        <div class="right">
+            <div class="phead">📊 Analysis Data</div>
+            <div class="tsec">
+                <h3>📋 Measurements</h3>
+                <table class="dtbl">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Type</th>
+                            <th>Sig</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mBody"></tbody>
+                </table>
+                <div class="empty" id="mEmpty">No measurements yet — use a tool on the canvas</div>
+            </div>
+
+            <div class="tsec">
+                <h3>📐 Signature Dimensions</h3>
+                <table class="dtbl">
+                    <thead>
+                        <tr>
+                            <th>Sig</th>
+                            <th>W</th>
+                            <th>H</th>
+                            <th>Ratio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dBody"></tbody>
+                </table>
+            </div>
+
+            <div class="tsec">
+                <h3>📊 Angle Summary</h3>
+                <table class="dtbl">
+                    <thead>
+                        <tr>
+                            <th>Sig</th>
+                            <th>Avg°</th>
+                            <th>Std</th>
+                            <th>N</th>
+                        </tr>
+                    </thead>
+                    <tbody id="aBody"></tbody>
+                </table>
+            </div>
+
+            <div class="tsec">
+                <h3>🔄 Arc Curvature Details</h3>
+                <table class="dtbl">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Sig</th>
+                            <th>Turn°</th>
+                            <th>κ</th>
+                            <th>Radius</th>
+                        </tr>
+                    </thead>
+                    <tbody id="arcBody"></tbody>
+                </table>
+            </div>
+
+            <div class="overlay-ctrl" id="ovCtrl">
+                <h3
+                    style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--muted);margin-bottom:6px">
+                    🔍 Overlay</h3>
+                <label>Signature A: <select id="ovA"></select></label>
+                <label>Signature B: <select id="ovB"></select></label>
+                <label>Opacity: <input type="range" id="ovOp" min="0" max="1" step=".05" value=".5"></label>
+            </div>
+
+            <!-- REFERENCES -->
+            <div class="refs">
+                <h3>📄 Research References</h3>
+                <div class="rcard">
+                    <div class="rt">1. Individuality of Handwriting</div>
+                    <div class="rd">Srihari, S.N. et al. — <em>Journal of Forensic Sciences</em>, 47(4), 2002. Validates
+                        angle-of-writing measurement for disputed vs admitted signature comparison.</div>
+                </div>
+                <div class="rcard">
+                    <div class="rt">2. Automatic Signature Verification</div>
+                    <div class="rd">Impedovo, D. & Pirlo, G. — <em>IEEE Trans. SMC</em>, 38(5), 2008. Hough Transform
+                        line detection for slope/angle extraction in offline signatures.</div>
+                </div>
+                <div class="rcard">
+                    <div class="rt">3. Handwriting Recognition</div>
+                    <div class="rd">Plamondon, R. & Srihari, S.N. — <em>IEEE Trans. PAMI</em>, 22(1), 2000. Direction,
+                        stroke, distance, pressure, and shape vectors for signature comparison.</div>
+                </div>
+                <div class="rcard">
+                    <div class="rt">4. Offline Geometric Parameters</div>
+                    <div class="rd">Ferrer, M.A. et al. — <em>IEEE Trans. PAMI</em>, 27(6), 2005. Arc curvature radius
+                        and angle at curve inflection points for forgery detection.</div>
+                </div>
+
+                <h3 style="margin-top:14px">⚖ Indian Law — Applicable Sections</h3>
+                <table class="ltbl">
+                    <thead>
+                        <tr>
+                            <th>Section</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>BSA §39</b></td>
+                            <td>Expert opinions on handwriting (replaces IEA §45)</td>
+                        </tr>
+                        <tr>
+                            <td><b>BSA §41</b></td>
+                            <td>Opinion on handwriting & signature authenticity</td>
+                        </tr>
+                        <tr>
+                            <td><b>BSA §65</b></td>
+                            <td>Proof of signature and handwriting</td>
+                        </tr>
+                        <tr>
+                            <td><b>BSA §72</b></td>
+                            <td>Comparison of signature/writing/seal (replaces IEA §73)</td>
+                        </tr>
+                        <tr>
+                            <td><b>IPC §463</b></td>
+                            <td>Forgery — making a false document</td>
+                        </tr>
+                        <tr>
+                            <td><b>IPC §465</b></td>
+                            <td>Punishment for forgery</td>
+                        </tr>
+                        <tr>
+                            <td><b>IPC §468</b></td>
+                            <td>Forgery for purpose of cheating</td>
+                        </tr>
+                        <tr>
+                            <td><b>IPC §471</b></td>
+                            <td>Using forged document as genuine</td>
+                        </tr>
+                        <tr>
+                            <td><b>BNS §336</b></td>
+                            <td>Forgery (replaces IPC §463)</td>
+                        </tr>
+                        <tr>
+                            <td><b>BNS §338</b></td>
+                            <td>Forgery for cheating (replaces IPC §468)</td>
+                        </tr>
+                        <tr>
+                            <td><b>BNS §340</b></td>
+                            <td>Using forged document (replaces IPC §471)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="forensics-app.js"></script>
+</body>
+
+</html>
